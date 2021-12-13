@@ -1,8 +1,8 @@
 var path = require('path');
 
 // 导入插件
-var miniCssExtractPlugin  = require('mini-css-extract-plugin');
-var htmlWebpackPlugin = require('html-webpack-plugin');
+const miniCssExtractPlugin  = require('mini-css-extract-plugin');
+const htmlWebpackPlugin = require('html-webpack-plugin');
 
 var config = {
     entry: {
@@ -17,14 +17,21 @@ var config = {
     },
     mode: "development", // 指定mode development开发环境，production生产环境
     devtool: 'inline-source-map', 
-    devServer: {
-      contentBase: path.join(__dirname, "dist"), //告诉服务器从哪里提供内容。只有在你希望提供静态文件时才需要这样做
-      contentBasePublicPath: "/", //告诉服务器在哪个 URL 上提供内容，简单来说就是访问地址的URL后缀
-      serveIndex: true, // 告诉开发服务器启用后使用 serveIndex 中间件。serveIndex 中间件会在查看没有 index.html 文件的目录时生成目录列表。
-      watchContentBase: true, // 告知 dev-server，serve(服务) devServer.contentBase 选项下的文件。开启此选项后，在文件修改之后，会触发一次完整的页面重载。
+    devServer: {// devServer配置：https://webpack.docschina.org/configuration/dev-server/
+      static: {// webpack-dev-server V4的配置，V3版本有些许不同，具体可以查看迁移指南 https://github.com/webpack/webpack-dev-server/blob/master/migration-v4.md
+        directory: path.resolve(__dirname, "dist"),//告诉服务器从哪里提供内容。只有在你希望提供静态文件时才需要这样做
+        publicPath: "/",//告诉服务器在哪个 URL 上提供内容，简单来说就是访问地址的URL后缀
+        serveIndex: true,// 告诉开发服务器启用后使用 serveIndex 中间件。serveIndex 中间件会在查看没有 index.html 文件的目录时生成目录列表。
+        watch: true // 告知 dev-server，serve(服务) devServer.contentBase 选项下的文件。开启此选项后，在文件修改之后，会触发一次完整的页面重载。
+      },
       host: '127.0.0.1',  //指定使用一个 host。默认是 localhost。如果你希望服务器外部可访问 可以指定为0.0.0.0
       port: 8888, // 指定要监听请求的端口号 webpack serve  --host 127.0.0.1 --port 8888
-      open: 'chrome', //告诉 dev-server 在 server 启动后打开浏览器。默认禁用。 cli方式：webpack serve --open 'Google Chrome'
+      open: { // 告诉 dev-server 在服务器已经启动后打开浏览器。设置其为 true 以打开你的默认浏览器。
+        target: ["/"], // 在浏览器中打开指定页面，可以指定多个
+        app: {
+          name: 'chrome' // 提供要使用的浏览器名称(这里的名称以你在系统设置的具体名称为准)，而不是默认名称 
+        }
+      },
     },
     plugins: [
       new htmlWebpackPlugin({
@@ -45,14 +52,12 @@ var config = {
     module:{
         rules: [
             {
-                test: /\.css$/,
-                use: [miniCssExtractPlugin.loader, 'css-loader'],
-            },
-            {
                 test: /\.(scss)$/,
                 use: [{
                   // inject CSS to page
-                  loader: 'style-loader'
+                  // loader: 'style-loader'
+                  // 使用mini-css-extract-plugin插件提取CSS ,https://webpack.docschina.org/loaders/sass-loader/#extracts-css-into-separate-files
+                  loader: miniCssExtractPlugin.loader
                 }, {
                   // translates CSS into CommonJS modules
                   loader: 'css-loader'
