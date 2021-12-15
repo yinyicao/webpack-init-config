@@ -3,15 +3,16 @@
   "version": "1.0.0",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "webpack serve --config webpack.config.js"
+    "build": "npx webpack",
+    "start": "npx webpack serve --config webpack.config.js"
   },
-  "author": "",
+  "author": "yinyicao",
   "license": "ISC",
   "description": "",
   "devDependencies": {
     "@popperjs/core": "^2.11.0",
     "bootstrap": "^5.1.3",
+    "clean-webpack-plugin": "^4.0.0",
     "css-loader": "^6.5.1",
     "html-loader": "^3.0.1",
     "html-webpack-plugin": "^5.5.0",

@@ -1,13 +1,14 @@
 var path = require('path');
+var glob = require('glob');
 
 // 导入插件
 const miniCssExtractPlugin  = require('mini-css-extract-plugin');
 const htmlWebpackPlugin = require('html-webpack-plugin');
+const { CleanWebpackPlugin } = require('clean-webpack-plugin');
 
 var config = {
     entry: {
         index: './src/index.js', // 入口，表示从index.js开始工作
-        carousel: './src/pages/carousel/index.js',
     },
     output: {
         path: path.join(__dirname,'./dist'), // 存放打包后文件的输出目录，必填
@@ -39,24 +40,23 @@ var config = {
         filename: 'index.html',//打包生成的文件名叫index.html
         chunks:['index']//index.html里引用打包生成的index.js
       }),
-      new htmlWebpackPlugin({
-        template: './src/pages/carousel/index.html',
-        filename: 'pages/carousel/index.html',
-        chunks:['carousel']
-      }),
       new miniCssExtractPlugin({
           // 指定每个输出CSS文件的名称
-          filename: 'css-[name].css' 
+          filename: path.join('css','[name].css') 
+      }),
+      // 每次打包前清除以前打包生成的文件
+      new CleanWebpackPlugin({
+        dry: true,
       })
     ] ,
     module:{
         rules: [
             {
-                test: /\.(scss)$/,
+                test: /\.(sa|sc|c)ss$/,
                 use: [{
                   // inject CSS to page
                   // loader: 'style-loader'
-                  // 使用mini-css-extract-plugin插件提取CSS ,https://webpack.docschina.org/loaders/sass-loader/#extracts-css-into-separate-files
+                  // 使用mini-css-extract-plugin插件单独提取CSS并插入到page,https://webpack.docschina.org/loaders/sass-loader/#extracts-css-into-separate-files
                   loader: miniCssExtractPlugin.loader
                 }, {
                   // translates CSS into CommonJS modules
@@ -117,5 +117,42 @@ var config = {
         ]
     }  
 };
+
+// 配置参考：https://www.cnblogs.com/shiyunfront/articles/8782558.html
+// 获取指定路径下的入口文件
+function getEntries(globPath) {
+  var files = glob.sync(globPath),
+    entries = {};
+
+  files.forEach(function(filepath) {
+      // 取倒数第二层(pages下面的文件夹)做包名
+      var split = filepath.split('/');
+      var name = split[split.length - 2];
+
+      entries[name] = './' + filepath;
+  });
+
+  return entries;
+}
+     
+var entries = getEntries('src/pages/**/index.js');
+
+Object.keys(entries).forEach(function(name) {
+ // 每个页面生成一个entry，如果需要HotUpdate，在这里修改entry
+ config.entry[name] = entries[name];
+ 
+ // 每个页面生成一个html
+ var plugin = new htmlWebpackPlugin({
+     // 生成出来的html文件名
+     filename: path.join('pages',name,'index.html'),
+     // 每个html的模版
+     template: path.join('src','pages',name,'index.html'),
+     // 自动将引用插入html
+     inject: true,
+     // 每个html引用的js模块，也可以在这里加上vendor等公用模块
+     chunks: [name]
+ });
+ config.plugins.push(plugin);
+})
 
 module.exports = config;
